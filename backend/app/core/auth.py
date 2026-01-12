@@ -57,3 +57,59 @@ async def get_current_user(request:Request)->AuthUser:
 
         )
     
+    claims=request_state.payload
+    user_id=claims.get("sub")
+    org_id=claims.get("org_id")
+    org_permissions=claims.get("permissions") or claims.get(org_permissions) or []
+
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,detail="Not authorized"
+
+        )
+    
+    if not org_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,detail="No organization selected"
+            )
+    
+    return AuthUser(user_id=user_id,org_id=org_id,org_permissions=org_permissions) 
+    
+
+def require_view(user:AuthUser=Depends(get_current_user))->AuthUser:
+    if not user.can_view:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            details="View Permission required"
+            )
+    return user
+    
+
+def require_create(user:AuthUser=Depends(get_current_user))->AuthUser:
+    if not user.can_create:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            details="Create Permission required"
+            )
+    return user
+
+
+def require_delete(user:AuthUser=Depends(get_current_user))->AuthUser:
+    if not user.can_delete:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            details="Delete Permission required"
+            )
+    return user
+
+
+def require_edit(user:AuthUser=Depends(get_current_user))->AuthUser:
+    if not user.can_edit:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            details="Edit permission required"
+        )
+    return user
+
+
+    
